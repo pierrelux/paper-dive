@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "paper-dive",
+      "runtimeExecutable": ".venv/bin/python",
+      "runtimeArgs": ["-m", "server.app"],
+      "port": 8765
+    }
+  ]
+}

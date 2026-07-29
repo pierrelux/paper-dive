@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>paper-dive</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/marked@14.1.3/lib/marked.umd.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  </head>
+  <body>
+    <header class="bar">
+      <span class="brand">paper·dive</span>
+
+      <button id="open-file" class="btn">Open PDF</button>
+      <input id="file-input" type="file" accept="application/pdf" hidden />
+
+      <form id="url-form" class="url-form">
+        <input
+          id="url-input"
+          type="text"
+          placeholder="arXiv id or PDF URL"
+          spellcheck="false"
+        />
+        <button class="btn" type="submit">Load</button>
+      </form>
+
+      <div class="spacer"></div>
+
+      <div class="pager">
+        <button id="prev-page" class="btn icon" title="Previous page">↑</button>
+        <input id="page-num" type="text" value="–" />
+        <span id="page-count" class="muted">/ –</span>
+        <button id="next-page" class="btn icon" title="Next page">↓</button>
+      </div>
+
+      <div class="zoom">
+        <button id="zoom-out" class="btn icon" title="Zoom out">−</button>
+        <span id="zoom-level" class="muted">100%</span>
+        <button id="zoom-in" class="btn icon" title="Zoom in">+</button>
+      </div>
+
+      <button id="region-toggle" class="btn toggle" title="Select a region (or hold Alt and drag)">
+        ⬚ Region
+      </button>
+
+      <label class="level">
+        <select id="level">
+          <option value="simple">Simple</option>
+          <option value="standard" selected>Standard</option>
+          <option value="deep">Deep</option>
+        </select>
+      </label>
+    </header>
+
+    <main id="main">
+      <section id="viewer" class="viewer">
+        <div id="pages" class="pages"></div>
+        <div id="drop-hint" class="drop-hint">
+          <div>
+            <h1>Drop a PDF here</h1>
+            <p>
+              Then select any sentence, equation, or figure and press
+              <kbd>⌘</kbd><kbd>E</kbd> — or use the ⬚ Region tool for figures and
+              display math.
+            </p>
+          </div>
+        </div>
+        <div id="region-box" class="region-box" hidden></div>
+      </section>
+
+      <div id="splitter" class="splitter" title="Drag to resize"></div>
+
+      <aside id="panel" class="panel">
+        <div class="panel-head">
+          <span>Explanations</span>
+          <div class="spacer"></div>
+          <button id="outline-toggle" class="btn small toggle" title="Show the dive tree">
+            Outline
+          </button>
+          <button id="export" class="btn small" title="Copy all as Markdown">Export</button>
+          <button id="clear" class="btn small">Clear</button>
+        </div>
+        <nav id="outline" class="outline" hidden></nav>
+        <div id="cards" class="cards">
+          <p class="empty">Nothing explained yet.</p>
+        </div>
+      </aside>
+    </main>
+
+    <button id="explain-fab" class="fab" hidden>Explain</button>
+
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>
