@@ -558,6 +558,11 @@ async function streamExplain(payload, handlers) {
     } catch {
       /* non-JSON error body */
     }
+    if (resp.status === 503) {
+      // Key went missing or was never set — ask for it rather than just failing.
+      $("setup").hidden = false;
+      $("setup-key").focus();
+    }
     throw new Error(detail);
   }
 
@@ -658,6 +663,48 @@ $("clear").onclick = () => {
   cardsEl.innerHTML = '<p class="empty">Nothing explained yet.</p>';
   refreshOutline();
 };
+
+// ----------------------------------------------------------------- first run
+
+async function checkKey() {
+  try {
+    const { has_key: hasKey } = await (await fetch("/api/status")).json();
+    $("setup").hidden = hasKey;
+    if (!hasKey) $("setup-key").focus();
+  } catch {
+    /* server not up yet; the explain call will surface anything real */
+  }
+}
+
+$("setup-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const button = e.target.querySelector("button");
+  const error = $("setup-error");
+  const key = $("setup-key").value.trim();
+  if (!key) return;
+
+  button.disabled = true;
+  button.textContent = "Checking…";
+  error.hidden = true;
+  try {
+    const resp = await fetch("/api/key", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key }),
+    });
+    if (!resp.ok) throw new Error((await resp.json()).detail || `HTTP ${resp.status}`);
+    $("setup").hidden = true;
+    $("setup-key").value = "";
+  } catch (err) {
+    error.textContent = String(err.message || err);
+    error.hidden = false;
+  } finally {
+    button.disabled = false;
+    button.textContent = "Save and start";
+  }
+};
+
+checkKey();
 
 // ------------------------------------------------------------------ splitter
 

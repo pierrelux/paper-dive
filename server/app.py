@@ -34,17 +34,14 @@ app = FastAPI(title="paper-dive")
 _client: anthropic.AsyncAnthropic | None = None
 
 
+ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+
+
 def get_client() -> anthropic.AsyncAnthropic:
     global _client
     if _client is None:
         if not os.environ.get("ANTHROPIC_API_KEY"):
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "ANTHROPIC_API_KEY is not set. Export it in the shell that starts "
-                    "the server, or put it in a .env file next to pyproject.toml."
-                ),
-            )
+            raise HTTPException(status_code=503, detail="No API key configured.")
         _client = anthropic.AsyncAnthropic()
     return _client
 
@@ -184,6 +181,54 @@ async def explain(req: ExplainRequest) -> StreamingResponse:
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# -------------------------------------------------------------------- setup
+#
+# First run has no key. Rather than making people hand-edit a dotfile, the UI
+# asks for one, and it is checked against the API before being saved.
+
+
+class KeyRequest(BaseModel):
+    key: str
+
+
+@app.get("/api/status")
+async def status() -> dict:
+    return {"has_key": bool(os.environ.get("ANTHROPIC_API_KEY"))}
+
+
+@app.post("/api/key")
+async def set_key(req: KeyRequest) -> dict:
+    global _client
+    key = req.key.strip()
+    if not key.startswith("sk-ant-"):
+        raise HTTPException(status_code=400, detail="That doesn't look like an Anthropic API key.")
+
+    probe = anthropic.AsyncAnthropic(api_key=key, max_retries=0, timeout=20)
+    try:
+        await probe.models.retrieve(MODEL)
+    except anthropic.AuthenticationError:
+        raise HTTPException(status_code=400, detail="The API rejected that key.") from None
+    except anthropic.PermissionDeniedError:
+        raise HTTPException(
+            status_code=400, detail=f"That key cannot use {MODEL}."
+        ) from None
+    except anthropic.APIError as exc:
+        raise HTTPException(status_code=502, detail=f"Could not reach the API: {exc}") from exc
+
+    lines = [
+        line
+        for line in (ENV_FILE.read_text().splitlines() if ENV_FILE.exists() else [])
+        if not line.startswith("ANTHROPIC_API_KEY=")
+    ]
+    lines.append(f"ANTHROPIC_API_KEY={key}")
+    ENV_FILE.write_text("\n".join(lines) + "\n")
+    ENV_FILE.chmod(0o600)  # the key is readable only by this user
+
+    os.environ["ANTHROPIC_API_KEY"] = key
+    _client = None  # rebuild against the new key
+    return {"ok": True}
 
 
 # ------------------------------------------------------------------ pdf fetching

@@ -6,19 +6,33 @@ that one thing explained — with the surrounding pages as context.
 It runs locally: a PDF.js viewer in the browser, a small FastAPI server that streams
 explanations from Claude.
 
-## Setup
+## Install (macOS)
 
 ```bash
-uv venv && uv pip install -e .
+curl -fsSL https://raw.githubusercontent.com/pierrelux/paper-dive/main/install.sh | bash
 ```
 
-Set your key (either works):
+That installs [uv](https://docs.astral.sh/uv/) if you don't have it, puts the code in
+`~/.local/share/paper-dive`, builds `paper-dive.app` into `~/Applications`, and opens
+it. On first run the app asks for an Anthropic API key
+([get one here](https://console.anthropic.com/settings/keys)) and stores it in a
+`.env` next to the code, readable only by you. Nothing is sent anywhere but Anthropic.
+
+Re-run the same line to update. To remove it:
+`~/.local/share/paper-dive/install.sh --uninstall`.
+
+Piping a script into `bash` deserves a look first — the script is
+[install.sh](install.sh), and you can equally clone the repo and run `./install.sh`.
+
+## Run it from source (any OS)
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+git clone https://github.com/pierrelux/paper-dive && cd paper-dive
+uv run python -m server.app
 ```
 
-or `cp .env.example .env` and edit it.
+Then open http://localhost:8765 and paste your key when asked. `uv` handles the
+virtualenv; with plain pip it's `pip install -e .` first.
 
 ## Run
 
@@ -29,6 +43,8 @@ or `cp .env.example .env` and edit it.
 Then open http://localhost:8765.
 
 ### As a Dock app (macOS)
+
+The installer above does this for you. By hand, from a checkout:
 
 ```bash
 uv pip install -e ".[desktop]"

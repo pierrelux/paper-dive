@@ -424,6 +424,85 @@ kbd {
   color: var(--fg-muted);
 }
 
+/* ------------------------------------------------------------ first run */
+
+.setup {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.setup-card {
+  width: min(460px, 100%);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.setup-card h1 {
+  margin: 0 0 8px;
+  font-size: 19px;
+}
+
+.setup-card p {
+  margin: 0 0 14px;
+  color: var(--fg-muted);
+}
+
+.setup-card code {
+  font: 12.5px var(--mono);
+}
+
+.setup-card input {
+  font: inherit;
+  width: 100%;
+  padding: 8px 10px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.setup-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.setup-row a {
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.btn.primary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.btn.primary:hover {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+
+.btn.primary[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.setup-error {
+  margin: 12px 0 0;
+  color: #c0392b;
+}
+
 /* --------------------------------------------------------------- dive tree */
 
 /* A phrase that has been dived into. */

@@ -94,6 +94,31 @@
 
     <button id="explain-fab" class="fab" hidden>Explain</button>
 
+    <div id="setup" class="setup" hidden>
+      <form id="setup-form" class="setup-card">
+        <h1>One thing first</h1>
+        <p>
+          paper·dive explains papers using Claude, so it needs an Anthropic API key.
+          It is stored in a <code>.env</code> file on this machine and sent only to
+          Anthropic.
+        </p>
+        <input
+          id="setup-key"
+          type="password"
+          placeholder="sk-ant-…"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <div class="setup-row">
+          <button class="btn primary" type="submit">Save and start</button>
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer"
+            >Get a key</a
+          >
+        </div>
+        <p id="setup-error" class="setup-error" hidden></p>
+      </form>
+    </div>
+
     <script type="module" src="/static/app.js"></script>
   </body>
 </html>
