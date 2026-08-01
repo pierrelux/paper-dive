@@ -28,6 +28,24 @@ or `cp .env.example .env` and edit it.
 
 Then open http://localhost:8765.
 
+### As a Dock app (macOS)
+
+```bash
+./scripts/make_app.sh
+open ~/Applications/paper-dive.app
+```
+
+Right-click its Dock icon → *Options* → *Keep in Dock*, and from then on it is one
+click. Launching starts the server and opens a plain window with no tab strip or
+address bar; closing that window shuts the server down again. Launching it a second
+time just opens another window against the running server.
+
+It uses Chrome with a throwaway profile under
+`~/Library/Application Support/paper-dive/`, so it never touches your everyday
+browser session; without Chrome it falls back to your default browser. Server output
+goes to `~/Library/Logs/paper-dive.log`. Rebuild with `make_app.sh` if you move the
+checkout — the launcher has its path baked in.
+
 ## Using it
 
 - **Open a paper** — drag a PDF onto the window, click *Open PDF*, or paste an arXiv id
@@ -73,6 +91,8 @@ server/prompts.py   system prompt, reader levels, dive prompt, message construct
 web/pdfview.js      rendering, text layer, selection extraction, region capture
 web/app.js          UI wiring and the explanation tree
 web/markdown.js     Markdown + KaTeX rendering
+scripts/make_app.sh builds the macOS .app wrapper
+scripts/make_icon.py draws the app icon (stdlib only, no image deps)
 ```
 
 `window.__view` exposes the viewer in the console if a PDF renders oddly.
