@@ -31,21 +31,24 @@ Then open http://localhost:8765.
 ### As a Dock app (macOS)
 
 ```bash
+uv pip install -e ".[desktop]"
 ./scripts/make_app.sh
 open ~/Applications/paper-dive.app
 ```
 
 Right-click its Dock icon → *Options* → *Keep in Dock*, and from then on it is one
-click. Launching starts the server and opens a plain window with no tab strip or
-address bar. Quitting the window (⌘Q), or quitting the app from its own Dock icon,
-shuts the server down; clicking the icon again while it runs just brings the window
-forward.
+click. It is a real app, not a browser window: one Dock tile with paper-dive's own
+icon, and ⌘Q quits it. Clicking the icon again while it runs brings the window
+forward rather than starting a second copy.
 
-It uses Chrome with a throwaway profile under
-`~/Library/Application Support/paper-dive/`, so it never touches your everyday
-browser session; without Chrome it falls back to your default browser. Server output
-goes to `~/Library/Logs/paper-dive.log`. Rebuild with `make_app.sh` if you move the
-checkout — the launcher has its path baked in.
+The window is a native WKWebView owned by the app process, and the server runs on a
+background thread inside that same process on an ephemeral port — so quitting can't
+leave anything behind, and it never collides with a `python -m server.app` you
+already have running. Output goes to `~/Library/Logs/paper-dive.log`. Rebuild with
+`make_app.sh` if you move the checkout — the launcher has its path baked in.
+
+`.venv/bin/python scripts/check_desktop.py` opens the window, loads a paper through
+it, and prints what actually rendered — useful if the window ever comes up blank.
 
 ## Using it
 
@@ -92,8 +95,10 @@ server/prompts.py   system prompt, reader levels, dive prompt, message construct
 web/pdfview.js      rendering, text layer, selection extraction, region capture
 web/app.js          UI wiring and the explanation tree
 web/markdown.js     Markdown + KaTeX rendering
+server/desktop.py   desktop entry point: server thread + native window
 scripts/make_app.sh builds the macOS .app wrapper
 scripts/make_icon.py draws the app icon (stdlib only, no image deps)
+scripts/check_desktop.py drives the native window and reports what rendered
 ```
 
 `window.__view` exposes the viewer in the console if a PDF renders oddly.

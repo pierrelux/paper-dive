@@ -235,7 +235,7 @@ async def index() -> FileResponse:
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
 
-def _load_dotenv() -> None:
+def load_dotenv() -> None:
     env_file = Path(__file__).resolve().parent.parent / ".env"
     if not env_file.exists():
         return
@@ -250,7 +250,7 @@ def _load_dotenv() -> None:
 def main() -> None:
     import uvicorn
 
-    _load_dotenv()
+    load_dotenv()
     port = int(os.environ.get("PORT", "8765"))
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
 

@@ -68,84 +68,27 @@ LAUNCHER
 cat >>"$APP/Contents/MacOS/paper-dive" <<'LAUNCHER'
 set -u
 
-PORT="${PAPER_DIVE_PORT:-8765}"
-URL="http://127.0.0.1:${PORT}/"
 LOG="$HOME/Library/Logs/paper-dive.log"
-PROFILE="$HOME/Library/Application Support/paper-dive/browser"
-CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 die() {
   osascript -e "display alert \"paper-dive\" message \"$1\" as critical" >/dev/null 2>&1
   exit 1
 }
 
-listening() { /usr/bin/nc -z 127.0.0.1 "$PORT" >/dev/null 2>&1; }
-
-# Chrome may hand a new window to an already-running instance and exit at once,
-# so the instance is tracked by its profile rather than by the pid we spawned.
-window_open() { /usr/bin/pgrep -f -- "--user-data-dir=$PROFILE" >/dev/null 2>&1; }
-
 [ -x "$REPO/.venv/bin/python" ] ||
-  die "No virtualenv at $REPO/.venv. Run: uv venv && uv pip install -e ."
+  die "No virtualenv at $REPO/.venv. Run: uv venv && uv pip install -e '.[desktop]'"
 
-# Whoever starts the server owns it; a second launch just opens another window.
-owner=0
-server=""
-browser=""
+"$REPO/.venv/bin/python" -c 'import webview' 2>/dev/null ||
+  die "The native window needs pywebview. Run: uv pip install -e '.[desktop]'"
 
-if ! listening; then
-  mkdir -p "$(dirname "$LOG")"
-  { echo; echo "=== $(date) ==="; } >>"$LOG"
-  ( cd "$REPO" && exec .venv/bin/python -m server.app ) >>"$LOG" 2>&1 &
-  server=$!
-  owner=1
-  for _ in $(seq 1 80); do
-    listening && break
-    kill -0 "$server" 2>/dev/null || die "The server exited on startup. See $LOG"
-    sleep 0.15
-  done
-  listening || die "The server did not come up within 12s. See $LOG"
-fi
+mkdir -p "$(dirname "$LOG")"
+{ echo; echo "=== $(date) ==="; } >>"$LOG"
 
-cleanup() {
-  [ "$owner" = 1 ] || return 0
-  /usr/bin/pkill -f -- "--user-data-dir=$PROFILE" 2>/dev/null
-  [ -n "$server" ] && kill "$server" 2>/dev/null
-  return 0
-}
-trap cleanup EXIT INT TERM
+cd "$REPO" || die "Cannot reach $REPO"
 
-if [ -n "${PAPER_DIVE_NO_WINDOW:-}" ]; then
-  [ "$owner" = 1 ] && wait "$server"
-  exit 0
-fi
-
-if [ -x "$CHROME" ]; then
-  # A dedicated profile keeps this out of the way of your everyday Chrome and
-  # gives a plain window with no tab strip or address bar.
-  mkdir -p "$PROFILE"
-  "$CHROME" --app="$URL" --user-data-dir="$PROFILE" \
-    --no-first-run --no-default-browser-check --window-size=1500,950 \
-    >/dev/null 2>&1 &
-  browser=$!
-  for _ in $(seq 1 60); do
-    window_open && break
-    sleep 0.25
-  done
-  window_open || die "Chrome did not open the paper-dive window."
-else
-  open "$URL"
-fi
-
-# Hold the app open for as long as the window is. Quitting from the Dock, or
-# quitting the window, takes the server down with it.
-if [ "$owner" = 1 ]; then
-  if [ -n "$browser" ]; then
-    while window_open; do sleep 1; done
-  else
-    wait "$server"
-  fi
-fi
+# exec, so this process (the bundle's main process) becomes the window's
+# process and the Dock shows paper-dive rather than a browser or Python.
+exec .venv/bin/python -m server.desktop >>"$LOG" 2>&1
 LAUNCHER
 
 chmod +x "$APP/Contents/MacOS/paper-dive"
