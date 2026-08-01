@@ -47,9 +47,21 @@ function configure() {
   configured = true;
 }
 
-export function renderMarkdown(el, source) {
+/**
+ * While streaming, an expression whose closing delimiter hasn't arrived yet
+ * would flash as raw LaTeX. Hold it back until it is complete.
+ */
+function dropTrailingPartialMath(src) {
+  if ((src.split("$$").length - 1) % 2 === 1) return src.slice(0, src.lastIndexOf("$$"));
+  if (((src.match(/(?<!\$)\$(?!\$)/g) || []).length % 2) === 1) {
+    return src.slice(0, src.lastIndexOf("$"));
+  }
+  return src;
+}
+
+export function renderMarkdown(el, source, { streaming = false } = {}) {
   configure();
-  const { text, math } = extractMath(source);
+  const { text, math } = extractMath(streaming ? dropTrailingPartialMath(source) : source);
   let html = marked.parse(text);
   html = html.replace(/@@M(\d+)@@/g, (_, i) => {
     const item = math[Number(i)];

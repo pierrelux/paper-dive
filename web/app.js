@@ -497,9 +497,10 @@ async function run(node, { question, dive: divePhrase }) {
   let text = "";
   let echo = question ?? null;
   let frame = null;
+  let streaming = true;
   const paint = () => {
     frame = null;
-    renderMarkdown(answer, text);
+    renderMarkdown(answer, text, { streaming });
   };
 
   try {
@@ -535,6 +536,7 @@ async function run(node, { question, dive: divePhrase }) {
   }
 
   if (frame) cancelAnimationFrame(frame);
+  streaming = false;
   paint();
 
   if (text) {

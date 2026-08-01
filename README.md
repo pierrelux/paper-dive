@@ -1,10 +1,33 @@
-# paper·dive
+<h1 align="center">paper·dive</h1>
 
-Read a paper. Select a sentence, an equation, or drag a box around a figure, and get
-that one thing explained — with the surrounding pages as context.
+<p align="center">
+  Read a paper. Select the part you don't follow — a sentence, an equation, a figure.<br>
+  Get that one thing explained, then dive into the explanation itself.
+</p>
 
-It runs locally: a PDF.js viewer in the browser, a small FastAPI server that streams
-explanations from Claude.
+<p align="center">
+  <img src="docs/demo.gif" alt="Boxing the attention equation, reading the explanation, then diving into a phrase inside it" width="900">
+</p>
+
+<p align="center">
+  <sub>Boxing Equation 1 of <i>Attention Is All You Need</i>, then going deeper on a phrase
+  in the answer. Real session, ~2× speed.</sub>
+</p>
+
+## What it does
+
+- **Explain a selection.** Highlight text and press <kbd>⌘E</kbd>, or drag a box around a
+  figure or displayed equation. The answer leads with what the thing *is*, defines every
+  symbol in the paper's own notation, gives the intuition, and flags what a careful
+  reader would trip on.
+- **Go deeper, recursively.** Select a phrase *inside an answer* and the button reads
+  **Go deeper**. The new explanation nests under the paragraph it came from and the
+  phrase gets underlined, so you can see what you've already opened.
+- **Stay in context.** A dive continues the same conversation rather than starting a new
+  one, so a third-level answer can still point at the figure you boxed, and each level is
+  told to assume everything above it is understood.
+- **Follow up** at any depth, **navigate** the dive tree from the Outline, and **export**
+  the whole thing as nested Markdown.
 
 ## Install (macOS)
 
@@ -12,116 +35,77 @@ explanations from Claude.
 curl -fsSL https://raw.githubusercontent.com/pierrelux/paper-dive/main/install.sh | bash
 ```
 
-That installs [uv](https://docs.astral.sh/uv/) if you don't have it, puts the code in
-`~/.local/share/paper-dive`, builds `paper-dive.app` into `~/Applications`, and opens
-it. On first run the app asks for an Anthropic API key
-([get one here](https://console.anthropic.com/settings/keys)) and stores it in a
-`.env` next to the code, readable only by you. Nothing is sent anywhere but Anthropic.
+Installs [uv](https://docs.astral.sh/uv/) if you don't have it, puts the code in
+`~/.local/share/paper-dive`, builds `paper-dive.app` into `~/Applications`, and opens it.
+It's a real app — its own Dock icon, its own window, ⌘Q to quit.
 
-Re-run the same line to update. To remove it:
-`~/.local/share/paper-dive/install.sh --uninstall`.
+On first run it asks for an Anthropic API key
+([get one](https://console.anthropic.com/settings/keys)). The key is checked before it's
+saved, stored in a `.env` readable only by you, and sent nowhere but Anthropic.
 
-Piping a script into `bash` deserves a look first — the script is
-[install.sh](install.sh), and you can equally clone the repo and run `./install.sh`.
+Re-run the same line to update; `~/.local/share/paper-dive/install.sh --uninstall` to
+remove. Piping a script into `bash` deserves a look first — it's [install.sh](install.sh),
+and cloning the repo and running `./install.sh` does the same thing.
 
-## Run it from source (any OS)
+## From source (any OS)
 
 ```bash
 git clone https://github.com/pierrelux/paper-dive && cd paper-dive
 uv run python -m server.app
 ```
 
-Then open http://localhost:8765 and paste your key when asked. `uv` handles the
-virtualenv; with plain pip it's `pip install -e .` first.
-
-## Run
-
-```bash
-.venv/bin/python -m server.app
-```
-
-Then open http://localhost:8765.
-
-### As a Dock app (macOS)
-
-The installer above does this for you. By hand, from a checkout:
-
-```bash
-uv pip install -e ".[desktop]"
-./scripts/make_app.sh
-open ~/Applications/paper-dive.app
-```
-
-Right-click its Dock icon → *Options* → *Keep in Dock*, and from then on it is one
-click. It is a real app, not a browser window: one Dock tile with paper-dive's own
-icon, and ⌘Q quits it. Clicking the icon again while it runs brings the window
-forward rather than starting a second copy.
-
-The window is a native WKWebView owned by the app process, and the server runs on a
-background thread inside that same process on an ephemeral port — so quitting can't
-leave anything behind, and it never collides with a `python -m server.app` you
-already have running. Output goes to `~/Library/Logs/paper-dive.log`. Rebuild with
-`make_app.sh` if you move the checkout — the launcher has its path baked in.
-
-`.venv/bin/python scripts/check_desktop.py` opens the window, loads a paper through
-it, and prints what actually rendered — useful if the window ever comes up blank.
+Open http://localhost:8765 and paste your key when asked.
 
 ## Using it
 
-- **Open a paper** — drag a PDF onto the window, click *Open PDF*, or paste an arXiv id
-  (`1706.03762`), an arXiv URL, or any direct PDF link into the box.
-- **Explain text** — select it and press <kbd>⌘E</kbd>, or click the *Explain* button
-  that appears under the selection.
-- **Explain a figure or display equation** — click **⬚ Region** (or just hold
-  <kbd>Alt</kbd>) and drag a box. The region is re-rendered at up to 3× and sent as an
-  image, so small subscripts stay legible.
-- **Go deeper, recursively** — select a phrase *inside an explanation* and the same
-  Explain button reads **Go deeper**. The new explanation nests directly under the
-  paragraph it came from, and the phrase gets underlined so you can see what you've
-  already opened. Dives nest to any depth; click a header to collapse one.
-- **Follow up** — every explanation, at any depth, has its own *Ask a follow-up…* box.
-- **Navigate** — *Outline* shows the whole dive tree; click any entry to jump to it.
-  Clicking an underlined phrase jumps to its dive, and a dive's header jumps back to the
-  phrase.
-- **Depth** — the *Simple / Standard / Deep* selector changes who the answer is pitched
-  at: new to the subfield, knows the area, or expert.
-- **Export** — copies the whole tree to the clipboard as nested Markdown.
+| | |
+|---|---|
+| Open a paper | Drag a PDF in, click *Open PDF*, or paste an arXiv id (`1706.03762`) or PDF URL |
+| Explain text | Select it, then <kbd>⌘E</kbd> or click *Explain* |
+| Explain a figure or equation | Click **⬚ Region** (or hold <kbd>Alt</kbd>) and drag a box |
+| Go deeper | Select a phrase inside an answer → *Go deeper* |
+| Jump around | *Outline* shows the dive tree; underlined phrases link to their dives |
+| Depth | *Simple / Standard / Deep* — new to the field, knows the area, or expert |
 
 ## How it works
 
-Each request sends Claude three things: the paper's front matter (title and abstract,
-cached across requests so repeat selections are cheap), the text of the previous,
-current, and next page, and the selection itself — as text, or as a cropped PNG for a
-region. The system prompt asks for the specific thing explained rather than a summary:
-lead with the answer, define every symbol in the paper's own notation, give the
-intuition, and flag what a careful reader would trip on.
+Each request carries three things: the paper's front matter (cached across requests, so
+repeat selections are cheap), the text of the previous, current, and next page, and the
+selection itself — as text, or as a cropped PNG re-rendered at up to 3× so small
+subscripts stay legible.
 
-A dive is a **continuation of the same conversation**, not a new one: the paper context
-and the original figure stay at the head of the thread, and each level appends one turn.
-So a third-level dive can still point at the figure, the whole chain hits the prompt
-cache, and each answer is told to assume everything above it is already understood.
+Dives are turns in that same conversation:
+
+```
+user       [figure image] + page context + "explain this selection"
+assistant  …
+user       "From your explanation above, explain this specifically: <phrase>"
+assistant  …
+```
+
+which is why a deep dive still has the paper in view, and why the whole chain hits the
+prompt cache.
 
 Model: `claude-opus-5`, adaptive thinking, `effort: medium`, streamed over SSE.
 
 ## Layout
 
 ```
-server/app.py       FastAPI app: /api/explain (SSE), /api/fetch (PDF proxy), static files
-server/prompts.py   system prompt, reader levels, dive prompt, message construction
-web/pdfview.js      rendering, text layer, selection extraction, region capture
-web/app.js          UI wiring and the explanation tree
-web/markdown.js     Markdown + KaTeX rendering
-server/desktop.py   desktop entry point: server thread + native window
-scripts/make_app.sh builds the macOS .app wrapper
-scripts/make_icon.py draws the app icon (stdlib only, no image deps)
+server/app.py        FastAPI: /api/explain (SSE), /api/key, /api/fetch, static files
+server/prompts.py    system prompt, reader levels, dive prompt, message construction
+server/desktop.py    desktop entry point: server thread + native window
+web/pdfview.js       rendering, text layer, selection extraction, region capture
+web/app.js           UI wiring and the explanation tree
+web/markdown.js      Markdown + KaTeX rendering
+scripts/make_app.sh  builds the macOS .app
+scripts/make_icon.py draws the icon (stdlib only, no image deps)
 scripts/check_desktop.py drives the native window and reports what rendered
 ```
 
-`window.__view` exposes the viewer in the console if a PDF renders oddly.
-
 ## Notes
 
-- The viewer pulls PDF.js, KaTeX, and marked from jsDelivr, so first load needs network.
-- Selections that span a page break aren't picked up — select within one page.
+- PDF.js, KaTeX, and marked come from jsDelivr, so first load needs network.
+- Selections spanning a page break aren't picked up — select within one page.
 - `/api/fetch` refuses non-public hosts, but it is still an open fetcher; it is meant for
-  a server bound to localhost, which is what `python -m server.app` does.
+  a server bound to localhost, which is what the app does.
+- `window.__view` exposes the viewer in the console if a PDF renders oddly.

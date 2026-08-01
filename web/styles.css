@@ -199,6 +199,9 @@ body {
   flex: 1;
   overflow: auto;
   padding: 12px;
+  /* Scroll past the end, so the newest dive can be brought up to eye level
+     instead of being stuck against the bottom of the panel. */
+  padding-bottom: 35vh;
 }
 
 .empty {
