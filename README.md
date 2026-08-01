@@ -37,8 +37,9 @@ open ~/Applications/paper-dive.app
 
 Right-click its Dock icon → *Options* → *Keep in Dock*, and from then on it is one
 click. Launching starts the server and opens a plain window with no tab strip or
-address bar; closing that window shuts the server down again. Launching it a second
-time just opens another window against the running server.
+address bar. Quitting the window (⌘Q), or quitting the app from its own Dock icon,
+shuts the server down; clicking the icon again while it runs just brings the window
+forward.
 
 It uses Chrome with a throwaway profile under
 `~/Library/Application Support/paper-dive/`, so it never touches your everyday

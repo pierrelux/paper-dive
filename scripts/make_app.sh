@@ -81,6 +81,10 @@ die() {
 
 listening() { /usr/bin/nc -z 127.0.0.1 "$PORT" >/dev/null 2>&1; }
 
+# Chrome may hand a new window to an already-running instance and exit at once,
+# so the instance is tracked by its profile rather than by the pid we spawned.
+window_open() { /usr/bin/pgrep -f -- "--user-data-dir=$PROFILE" >/dev/null 2>&1; }
+
 [ -x "$REPO/.venv/bin/python" ] ||
   die "No virtualenv at $REPO/.venv. Run: uv venv && uv pip install -e ."
 
@@ -105,7 +109,7 @@ fi
 
 cleanup() {
   [ "$owner" = 1 ] || return 0
-  [ -n "$browser" ] && kill "$browser" 2>/dev/null
+  /usr/bin/pkill -f -- "--user-data-dir=$PROFILE" 2>/dev/null
   [ -n "$server" ] && kill "$server" 2>/dev/null
   return 0
 }
@@ -124,13 +128,23 @@ if [ -x "$CHROME" ]; then
     --no-first-run --no-default-browser-check --window-size=1500,950 \
     >/dev/null 2>&1 &
   browser=$!
+  for _ in $(seq 1 60); do
+    window_open && break
+    sleep 0.25
+  done
+  window_open || die "Chrome did not open the paper-dive window."
 else
   open "$URL"
 fi
 
-# Hold the app open while the window is: closing it tears the server down.
+# Hold the app open for as long as the window is. Quitting from the Dock, or
+# quitting the window, takes the server down with it.
 if [ "$owner" = 1 ]; then
-  if [ -n "$browser" ]; then wait "$browser"; else wait "$server"; fi
+  if [ -n "$browser" ]; then
+    while window_open; do sleep 1; done
+  else
+    wait "$server"
+  fi
 fi
 LAUNCHER
 
