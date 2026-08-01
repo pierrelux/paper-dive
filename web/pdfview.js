@@ -80,6 +80,10 @@ export class PdfView {
 
     this.currentPage = 1;
     this.onPageChange(1);
+    // Don't wait on IntersectionObserver for the first screenful — it doesn't
+    // fire dependably while the window is unfocused, which would leave the
+    // reader staring at blank pages until they scroll.
+    await this.renderVisible();
     return this.doc.numPages;
   }
 
@@ -90,11 +94,35 @@ export class PdfView {
     state.div.style.height = `${Math.floor(viewport.height)}px`;
   }
 
+  /**
+   * Text items for a page, fetched at most once. The front-matter scan and the
+   * text layer both want them, and asking pdf.js twice concurrently for the
+   * same page loses one of the answers.
+   */
+  ensureText(state) {
+    if (!state.textPromise) {
+      state.textPromise = state.proxy.getTextContent().then((content) => {
+        state.items = content.items.filter((it) => "str" in it);
+        state.text = joinItems(state.items);
+        return state;
+      });
+    }
+    return state.textPromise;
+  }
+
   async renderPage(n) {
     const state = this.pages[n - 1];
     if (!state || state.rendered) return;
     state.rendered = true;
+    try {
+      await this.paint(state);
+    } catch (err) {
+      state.rendered = false; // let it be retried rather than left blank
+      throw err;
+    }
+  }
 
+  async paint(state) {
     const viewport = state.viewport;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const canvas = state.canvas;
@@ -110,9 +138,7 @@ export class PdfView {
       transform: dpr === 1 ? null : [dpr, 0, 0, dpr, 0, 0],
     }).promise;
 
-    const content = await state.proxy.getTextContent();
-    state.items = content.items.filter((it) => "str" in it);
-    state.text = joinItems(state.items);
+    await this.ensureText(state);
     this.buildTextLayer(state);
   }
 
@@ -167,13 +193,17 @@ export class PdfView {
     this.renderVisible();
   }
 
-  renderVisible() {
+  async renderVisible() {
     const top = this.viewerEl.scrollTop;
     const bottom = top + this.viewerEl.clientHeight;
+    const pending = [];
     for (const state of this.pages) {
       const y = state.div.offsetTop;
-      if (y + state.div.offsetHeight > top - 400 && y < bottom + 400) this.renderPage(state.n);
+      if (y + state.div.offsetHeight > top - 400 && y < bottom + 400) {
+        pending.push(this.renderPage(state.n));
+      }
     }
+    await Promise.all(pending);
   }
 
   scrollToPage(n) {
@@ -198,11 +228,7 @@ export class PdfView {
   async textOf(n) {
     const state = this.pages[n - 1];
     if (!state) return "";
-    if (state.text === null) {
-      const content = await state.proxy.getTextContent();
-      state.items = content.items.filter((it) => "str" in it);
-      state.text = joinItems(state.items);
-    }
+    await this.ensureText(state);
     return state.text;
   }
 

@@ -38,18 +38,28 @@ def start_server() -> tuple[uvicorn.Server, int]:
     return server, server.servers[0].sockets[0].getsockname()[1]
 
 
+def create_window(port: int, title: str = TITLE):
+    """The window the app opens. Tests use this too, so options can't drift."""
+    import webview
+
+    return webview.create_window(
+        title,
+        f"http://127.0.0.1:{port}/",
+        width=1500,
+        height=950,
+        min_size=(900, 600),
+        # pywebview injects `body { user-select: none }` unless asked not to,
+        # which leaves the PDF text layer unselectable by mouse.
+        text_select=True,
+    )
+
+
 def main() -> None:
     import webview
 
     load_dotenv()
     server, port = start_server()
-    webview.create_window(
-        TITLE,
-        f"http://127.0.0.1:{port}/",
-        width=1500,
-        height=950,
-        min_size=(900, 600),
-    )
+    create_window(port)
     webview.start()  # blocks until the window closes
     server.should_exit = True
 
